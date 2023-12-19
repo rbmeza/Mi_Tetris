@@ -21,3 +21,5 @@ pip install pygame
 ```
 python Tetris.py 
 ```
+
+Mi solución tiene la implementación del sistema de rotación solicitado, la random bag y la eliminación de las líneas completadas. El resto de funcionalidades no las pude implementar debido a que me encontré en el camino con un funcionamiento extraño del juego. Este "bug" sucede cuando se genera una pieza "I", la cual luego de caer, deja de generar el resto de piezas (a pesar de sacarlas correctamente de la random bag) y sólo muestra la próxima "I" que se saca de la bolsa.
