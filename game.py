@@ -1,5 +1,5 @@
 from settings import *
-from random import choice
+from random import choice, randint
 from timer import Timer
 
 
@@ -8,6 +8,7 @@ class Game(Container):
         super().__init__(GAME_WIDTH, GAME_HEIGHT, BLACK,
                          "center", (WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
         self.sprites = pygame.sprite.Group()
+        self.bag = list(TETROMINOS.keys())
 
         # lines
         self.line_surface = self.surface.copy()
@@ -17,11 +18,12 @@ class Game(Container):
 
         # tetromino
         self.field_data = [[0 for x in range(COLUMNS)] for y in range(ROWS)]
-        self.tetromino = Tetromino(
-            self.sprites,
-            choice(list(TETROMINOS.keys())),
-            self.create_new_tetromino,
-            self.field_data)
+        self.create_new_tetromino()
+        # self.tetromino = Tetromino(
+        #     self.sprites,
+        #     "I",
+        #     self.create_new_tetromino,
+        #     self.field_data)
 
         # timer
         self.timers = {
@@ -29,16 +31,21 @@ class Game(Container):
             'horizontal move': Timer(MOVE_WAIT_TIME),
             'rotate': Timer(ROTATE_WAIT_TIME),
         }
-
         self.timers['vertical move'].activate()
+        self.pause = False
 
     def create_new_tetromino(self):
         self.check_finished_rows()
+        shape = self.bag.pop(randint(0, len(self.bag) - 1))
+        print(shape)
         self.tetromino = Tetromino(
             self.sprites,
-            choice(list(TETROMINOS.keys())),
+            shape,
             self.create_new_tetromino,
             self.field_data)
+
+        if not self.bag:
+            self.bag = list(TETROMINOS.keys())
 
     def timer_update(self):
         for timer in self.timers.values():
@@ -59,7 +66,11 @@ class Game(Container):
 
     def input(self):
         keys = pygame.key.get_pressed()
-
+        if self.pause:
+            if keys[pygame.K_p]:
+                self.pause = False
+                self.timers['vertical move'].activate()
+            return
         # move left
         if not self.timers['horizontal move'].active:
             if keys[pygame.K_LEFT]:
@@ -85,6 +96,11 @@ class Game(Container):
             if keys[pygame.K_z]:
                 self.tetromino.rotate(-1, True)
                 self.timers['rotate'].activate()
+
+        # pause game
+        if keys[pygame.K_p]:
+            self.timers['vertical move'].deactivate()
+            self.pause = True
 
     def check_finished_rows(self):
         # get the full rows indexes
@@ -112,12 +128,15 @@ class Game(Container):
             for block in self.sprites:
                 self.field_data[int(block.pos.y)][int(block.pos.x)] = block
 
-    def run(self):
+            for row in self.field_data:
+                print(row)
 
+    def run(self):
         # update
         self.input()
-        self.timer_update()
-        self.sprites.update()
+        if not self.pause:
+            self.timer_update()
+            self.sprites.update()
 
         # drawing
         self.surface.fill(GRAY)
